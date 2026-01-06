@@ -1,0 +1,43 @@
+name: Build OpenLara Zodi0
+
+on: [push, workflow_dispatch]
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+
+    steps:
+    - name: 1. Get Code
+      uses: actions/checkout@v3
+      with:
+        submodules: recursive
+
+    - name: 2. Setup Java
+      uses: actions/setup-java@v3
+      with:
+        java-version: '11'
+        distribution: 'temurin'
+
+    - name: 3. Setup Android Tools
+      uses: android-actions/setup-android@v3
+
+    - name: 4. Install Specific NDK (Fixes Errors)
+      run: sdkmanager "ndk;21.4.7075529"
+
+    - name: 5. Configure Project
+      working-directory: ./android
+      run: |
+        echo "ndk.dir=$ANDROID_HOME/ndk/21.4.7075529" > local.properties
+        chmod +x gradlew
+
+    - name: 6. Build APK
+      working-directory: ./android
+      run: ./gradlew assembleDebug --stacktrace
+
+    - name: 7. Upload APK
+      if: success()
+      uses: actions/upload-artifact@v4
+      with:
+        name: OpenLara-arm64
+        path: android/app/build/outputs/apk/debug/*.apk
+       
