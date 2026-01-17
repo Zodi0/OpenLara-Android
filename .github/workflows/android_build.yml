@@ -1,36 +1,47 @@
-oname: Build OpenLara Android
+name: Debug OpenLara Structure
 
 on:
   push:
-    branches: [ "master", "main" ]
   workflow_dispatch:
 
 jobs:
-  build:
+  debug_job:
     runs-on: ubuntu-latest
-
     steps:
-    - uses: actions/checkout@v3
-      with:
-        submodules: recursive # OpenLara needs submodules
+      - name: Checkout Code
+        uses: actions/checkout@v3
+        with:
+          submodules: recursive  # Crucial for OpenLara!
 
-    - name: Setup Android NDK
-      uses: android-actions/setup-android@v2
-    - name: Build with NDK
-      run: |
-        # Try to find where the Android files are. 
-        # Standard OpenLara location:
-        cd src/platform/android
+      - name: X-Ray File System (Find Android.mk)
+        run: |
+          echo "=========================================="
+          echo "SEARCHING FOR ANDROID BUILD FILES..."
+          echo "=========================================="
+          # This command finds any file named Android.mk and prints its location
+          find . -name "Android.mk"
+          echo "=========================================="
+          
+      - name: List All Folders (Deep Search)
+        run: |
+          echo "listing top 3 levels of folders:"
+          tree -L 3 . || find . -maxdepth 3 -type d
+
+      - name: Attempt Build (Auto-Detect Path)
+        uses: android-actions/setup-android@v2
         
-        # Run the build
-        ndk-build NDK_PROJECT_PATH=. NDK_APPLICATION_MK=jni/Application.mk
-
-    # This step packages the compiled libs into an APK (debug)
-    # Note: OpenLara might need a specific ant/gradle step, 
-    # but this will at least confirm if the C++ arm64 library compiles.
-    
-    - name: Upload Artifacts (Libs)
-      uses: actions/upload-artifact@v4
-      with:
-        name: arm64-libs
-        path: android/libs/arm64-v8a/
+      - name: Run Build with Verbose Logging
+        run: |
+          # Find the directory containing Android.mk automatically
+          BUILD_DIR=$(dirname $(find . -name "Android.mk" | head -n 1))
+          
+          if [ -z "$BUILD_DIR" ]; then
+            echo "ERROR: Could not find Android.mk anywhere!"
+            exit 1
+          fi
+          
+          echo "Found build directory at: $BUILD_DIR"
+          cd "$BUILD_DIR"
+          
+          # Run NDK Build with V=1 (Verbose) so we see WHY it fails
+          ndk-build V=1 NDK_PROJECT_PATH=. NDK_APPLICATION_MK=jni/Application.mk
