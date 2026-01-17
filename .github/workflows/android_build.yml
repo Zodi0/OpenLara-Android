@@ -1,4 +1,4 @@
-name: Build OpenLara Android
+oname: Build OpenLara Android
 
 on:
   push:
@@ -17,9 +17,13 @@ jobs:
     - name: Setup Android NDK
       uses: android-actions/setup-android@v2
 
-    - name: Build with NDK
+       - name: Build with NDK
       run: |
-        cd android
+        # Try to find where the Android files are. 
+        # Standard OpenLara location:
+        cd src/platform/android
+        
+        # Run the build
         ndk-build NDK_PROJECT_PATH=. NDK_APPLICATION_MK=jni/Application.mk
 
     # This step packages the compiled libs into an APK (debug)
