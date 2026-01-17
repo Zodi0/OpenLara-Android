@@ -1,0 +1,33 @@
+name: Build OpenLara Android
+
+on:
+  push:
+    branches: [ "master", "main" ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        submodules: recursive # OpenLara needs submodules
+
+    - name: Setup Android NDK
+      uses: android-actions/setup-android@v2
+
+    - name: Build with NDK
+      run: |
+        cd android
+        ndk-build NDK_PROJECT_PATH=. NDK_APPLICATION_MK=jni/Application.mk
+
+    # This step packages the compiled libs into an APK (debug)
+    # Note: OpenLara might need a specific ant/gradle step, 
+    # but this will at least confirm if the C++ arm64 library compiles.
+    
+    - name: Upload Artifacts (Libs)
+      uses: actions/upload-artifact@v4
+      with:
+        name: arm64-libs
+        path: android/libs/arm64-v8a/
