@@ -16,8 +16,7 @@ jobs:
 
     - name: Setup Android NDK
       uses: android-actions/setup-android@v2
-
-       - name: Build with NDK
+    - name: Build with NDK
       run: |
         # Try to find where the Android files are. 
         # Standard OpenLara location:
