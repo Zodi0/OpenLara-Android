@@ -1,47 +1,26 @@
-name: Debug OpenLara Structure
-
-on:
-  push:
-  workflow_dispatch:
-
+name: List All Files
+on: [push, workflow_dispatch]
 jobs:
-  debug_job:
+  list-files:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout Code
+      - name: Checkout
         uses: actions/checkout@v3
         with:
-          submodules: recursive  # Crucial for OpenLara!
+          submodules: recursive
 
-      - name: X-Ray File System (Find Android.mk)
+      - name: List EVERYTHING
         run: |
-          echo "=========================================="
-          echo "SEARCHING FOR ANDROID BUILD FILES..."
-          echo "=========================================="
-          # This command finds any file named Android.mk and prints its location
-          find . -name "Android.mk"
-          echo "=========================================="
+          echo "Current working directory:"
+          pwd
           
-      - name: List All Folders (Deep Search)
-        run: |
-          echo "listing top 3 levels of folders:"
-          tree -L 3 . || find . -maxdepth 3 -type d
-
-      - name: Attempt Build (Auto-Detect Path)
-        uses: android-actions/setup-android@v2
-        
-      - name: Run Build with Verbose Logging
-        run: |
-          # Find the directory containing Android.mk automatically
-          BUILD_DIR=$(dirname $(find . -name "Android.mk" | head -n 1))
+          echo "----------------------------------------"
+          echo "Listing all files (recursive):"
+          echo "----------------------------------------"
+          # This lists every file in the repo tree
+          find . -maxdepth 4 -not -path '*/.*'
           
-          if [ -z "$BUILD_DIR" ]; then
-            echo "ERROR: Could not find Android.mk anywhere!"
-            exit 1
-          fi
-          
-          echo "Found build directory at: $BUILD_DIR"
-          cd "$BUILD_DIR"
-          
-          # Run NDK Build with V=1 (Verbose) so we see WHY it fails
-          ndk-build V=1 NDK_PROJECT_PATH=. NDK_APPLICATION_MK=jni/Application.mk
+          echo "----------------------------------------"
+          echo "Checking specifically for Android files:"
+          # Case-insensitive search for android.mk
+          find . -iname "android.mk"
